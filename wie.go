@@ -4,70 +4,98 @@ import (
     "fmt"
     "errors"
     "strings"
+    "strconv"
 
     "github.com/sbani/wie/engines"
 
     "github.com/PuerkitoBio/goquery"
     "gopkg.in/alecthomas/kingpin.v2"
+    "github.com/fatih/color"
 )
 
-const WieVersion = "0.0.1"
+const WieVersion = "0.0.2"
 const Site = "stackoverflow.com";
 
-func getAnswer(stackUrl string) (answer string, hasAnswer bool) {
+// Get the short version of the answer with `<code>` or `<pre>` only.
+func getCodeFromAnswer(s *goquery.Selection) (answer string, hasAnswer bool) {
+    if pre := s.Find("pre").First(); pre.Length() > 0 {
+        answer = pre.Text()
+        hasAnswer = true
+    } else if code := s.Find("code").First(); code.Length() > 0 {
+        answer = code.Text()
+        hasAnswer = true
+    }
+
+    return
+}
+
+// Get the complete answer
+func getCompleteAnswer(s *goquery.Selection) (answer string, hasAnswer bool) {
+    return s.Find(".post-text").First().Text(), true
+}
+
+// Get the first answer from a given stackoverflow.com url.
+func getAnswer(stackUrl string, showAll bool) (votes int, answer string, hasAnswer bool) {
     doc, err := goquery.NewDocument(stackUrl)
     if err != nil {
         return
     }
 
     first := doc.Find(".answer").First()
-    if pre := first.Find("pre").First(); pre.Length() > 0 {
-        answer = pre.Text()
-        hasAnswer = true
-    } else if code := first.Find("code").First(); code.Length() > 0 {
-        answer = code.Text()
-        hasAnswer = true
+    if showAll {
+        answer, hasAnswer = getCompleteAnswer(first)
+    } else {
+        answer, hasAnswer = getCodeFromAnswer(first)
     }
 
-    strings.TrimSpace(answer)
+    answer = strings.TrimSpace(answer)
+
+    votes, err = strconv.Atoi(first.Find(".vote-count-post").First().Text())
 
     return
 }
 
 // Start the howto query search
-func howto(query string, engine engines.SearchEngine) (string, error) {
+func howto(query string, engine engines.SearchEngine, showAll bool) (votes int, answer string, err error) {
     // Get links from search engine
     links, err := engine.GetLinks(query, Site)
     if err != nil {
-        return "", err
+        return
     } else if len(links) == 0 {
-        return "", errors.New("No links found")
+        err = errors.New("No links found")
+        return
     }
 
     // Crawl links until first answer
-    answer := ""
     for _, link := range links {
-        answ, hasAnswer := getAnswer(link)
+        vts, answ, hasAnswer := getAnswer(link, showAll)
         if hasAnswer {
             answer = answ
+            votes = vts
             break
         }
     }
 
-    return answer, nil
+    return
 }
 
 var (
   question = kingpin.Arg("question", "The question you ask").Required().String()
+  printAll = kingpin.Flag("all", "Display the hole answer").Short('a').Bool()
+  printVotes = kingpin.Flag("votes", "Print answer's votes").Short('v').Bool()
 )
 
 func main() {
     kingpin.Version(WieVersion)
     kingpin.Parse()
 
-    answer, err := howto(*question, engines.CreateGoogle(false))
+    votes, answer, err := howto(*question, engines.CreateGoogle(false), *printAll)
     if err != nil {
         fmt.Println(err)
+    }
+
+    if *printVotes {
+        color.Cyan(fmt.Sprintf("Votes: %d", votes))
     }
 
     fmt.Println(answer)
