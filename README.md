@@ -1,6 +1,5 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/sbani/wie)](https://goreportcard.com/report/github.com/sbani/wie) [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)][bsd]
-
-# Answers Your DEV Questions Via The Command Line
+[![License][bsd-batch]][bsd] [![Go Report Card][goreport-batch]][goreport] [![Build Status][travis-batch]][travis]
+# Answers Your dev Questions via The Command Line
 `wie` means "how" in german and helps you to answer your programmer questions in the command line.
 
 ## Usage
@@ -40,6 +39,7 @@ The [BSD 3-Clause license][bsd], the same as the [Go language][golic].
 Kingpin's license is [here][kinglic]. goquery's license is [here][qrylic]. color's license is [here][colorlic]
 
 [bsd]: http://opensource.org/licenses/BSD-3-Clause
+[bsd-batch]: https://img.shields.io/badge/license-BSD--3--Clause-blue.svg
 [golic]: https://golang.org/LICENSE
 [kinglic]: https://github.com/alecthomas/kingpin/blob/master/COPYING
 [qrylic]: https://github.com/PuerkitoBio/goquery/blob/master/LICENSE
@@ -47,3 +47,7 @@ Kingpin's license is [here][kinglic]. goquery's license is [here][qrylic]. color
 [gleitz]: https://twitter.com/gleitz
 [sbani]: http://sbani.net
 [twit]: https://twitter.com/sbani_ger
+[goreport-batch]: https://goreportcard.com/badge/github.com/sbani/wie
+[goreport]: https://goreportcard.com/report/github.com/sbani/wie
+[travis]: https://travis-ci.org/sbani/wie
+[travis-batch]: https://travis-ci.org/sbani/wie.svg?branch=master
