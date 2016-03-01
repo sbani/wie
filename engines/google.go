@@ -9,11 +9,11 @@ import (
 
 // Google search engine
 type Google struct {
-	Host, Uri string
+	Host, URI string
 	SSL       bool
 }
 
-// Create google search engine
+// CreateGoogle is the func to create the search engine with default values
 func CreateGoogle(ssl bool) Google {
 	var schema string
 	if ssl {
@@ -29,9 +29,11 @@ func CreateGoogle(ssl bool) Google {
 	}
 }
 
-// Get links for specific search `query`
+// GetLinks for a `query` and `site`.
+// `site`: What site you want to get links for
+// `query`: Search query you want to search on `site` for.
 func (google Google) GetLinks(query, site string) (links []string, err error) {
-	doc, err := goquery.NewDocument(google.createSearchUrl(query, site))
+	doc, err := goquery.NewDocument(google.createSearchURL(query, site))
 	if err != nil {
 		return
 	}
@@ -51,8 +53,9 @@ func (google Google) GetLinks(query, site string) (links []string, err error) {
 	return
 }
 
-// Create search url for specific site and with query.
-func (google Google) createSearchUrl(query, site string) string {
-	uri := fmt.Sprintf(google.Uri, site, url.QueryEscape(query))
+// createSearchURL is used to create the google search URL.
+// Example: `https://www.google.de/search?q=site:stackoverflow.com+windows+get+date+command+line`
+func (google Google) createSearchURL(query, site string) string {
+	uri := fmt.Sprintf(google.URI, site, url.QueryEscape(query))
 	return google.Host + "/" + uri
 }

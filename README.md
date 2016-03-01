@@ -1,4 +1,6 @@
-# Answers Your dev Questions via The Command Line
+[![Go Report Card](https://goreportcard.com/badge/github.com/sbani/wie)](https://goreportcard.com/report/github.com/sbani/wie) [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)][bsd]
+
+# Answers Your DEV Questions Via The Command Line
 `wie` means "how" in german and helps you to answer your programmer questions in the command line.
 
 ## Usage

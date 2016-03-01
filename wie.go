@@ -13,8 +13,8 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-const WieVersion = "0.0.2"
-const Site = "stackoverflow.com"
+const wieVersion = "0.0.2"
+const site = "stackoverflow.com"
 
 // Get the short version of the answer with `<code>` or `<pre>` only.
 func getCodeFromAnswer(s *goquery.Selection) (answer string, hasAnswer bool) {
@@ -35,8 +35,8 @@ func getCompleteAnswer(s *goquery.Selection) (answer string, hasAnswer bool) {
 }
 
 // Get the first answer from a given stackoverflow.com url.
-func getAnswer(stackUrl string, showAll bool) (votes int, answer string, hasAnswer bool) {
-	doc, err := goquery.NewDocument(stackUrl)
+func getAnswer(stackURL string, showAll bool) (votes int, answer string, hasAnswer bool) {
+	doc, err := goquery.NewDocument(stackURL)
 	if err != nil {
 		return
 	}
@@ -58,7 +58,7 @@ func getAnswer(stackUrl string, showAll bool) (votes int, answer string, hasAnsw
 // Start the howto query search
 func howto(query string, engine engines.SearchEngine, showAll bool) (votes int, answer string, err error) {
 	// Get links from search engine
-	links, err := engine.GetLinks(query, Site)
+	links, err := engine.GetLinks(query, site)
 	if err != nil {
 		return
 	} else if len(links) == 0 {
@@ -86,7 +86,7 @@ var (
 )
 
 func main() {
-	kingpin.Version(WieVersion)
+	kingpin.Version(wieVersion)
 	kingpin.Parse()
 
 	votes, answer, err := howto(*question, engines.CreateGoogle(false), *printAll)
