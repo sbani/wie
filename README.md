@@ -1,4 +1,4 @@
-[![License][bsd-batch]][bsd] [![Go Report Card][goreport-batch]][goreport] [![Build Status][travis-batch]][travis]
+[![License][bsd-batch]][bsd] [![Go Report Card][goreport-batch]][goreport] [![Build Status][travis-batch]][travis] [![GoDoc][doc]][doc-batch]
 # Answers Your dev Questions via The Command Line
 `wie` means "how" in german and helps you to answer your programmer questions in the command line.
 
@@ -51,3 +51,5 @@ Kingpin's license is [here][kinglic]. goquery's license is [here][qrylic]. color
 [goreport]: https://goreportcard.com/report/github.com/sbani/wie
 [travis]: https://travis-ci.org/sbani/wie
 [travis-batch]: https://travis-ci.org/sbani/wie.svg?branch=master
+[doc]: https://godoc.org/github.com/sbani/wie
+[doc-batch]: https://godoc.org/github.com/sbani/wie?status.svg
