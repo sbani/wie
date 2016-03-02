@@ -31,7 +31,12 @@ func getCodeFromAnswer(s *goquery.Selection) (answer string, hasAnswer bool) {
 
 // Get the complete answer
 func getCompleteAnswer(s *goquery.Selection) (answer string, hasAnswer bool) {
-	return s.Find(".post-text").First().Text(), true
+	if text := s.Find(".post-text").First(); text.Length() > 0 {
+		answer = text.Text()
+		hasAnswer = true
+	}
+
+	return
 }
 
 // Get the first answer from a given stackoverflow.com url.
