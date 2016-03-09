@@ -5,103 +5,154 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/sbani/wie/engines"
+	"os"
+	"net/url"
+	"bufio"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/fatih/color"
-	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 const wieVersion = "0.0.2"
 const site = "stackoverflow.com"
 
-// Get the short version of the answer with `<code>` or `<pre>` only.
-func getCodeFromAnswer(s *goquery.Selection) (answer string, hasAnswer bool) {
-	if pre := s.Find("pre").First(); pre.Length() > 0 {
-		answer = pre.Text()
-		hasAnswer = true
-	} else if code := s.Find("code").First(); code.Length() > 0 {
-		answer = code.Text()
-		hasAnswer = true
-	}
+const googleHost = "https://www.google.com"
+const googleUri = "/search?q=site:%s+%s"
 
-	return
+// answer holds all information related to an answer
+type answer struct {
+    url string
+    html *goquery.Selection
+    shortText, longText string
+    votes int
 }
 
-// Get the complete answer
-func getCompleteAnswer(s *goquery.Selection) (answer string, hasAnswer bool) {
-	if text := s.Find(".post-text").First(); text.Length() > 0 {
-		answer = text.Text()
-		hasAnswer = true
-	}
-
-	return
-}
-
-// Get the first answer from a given stackoverflow.com url.
-func getAnswer(stackURL string, showAll bool) (votes int, answer string, hasAnswer bool) {
-	doc, err := goquery.NewDocument(stackURL)
+// newAnswer creates a nem answer
+func newAnswer(url string) (*answer, error) {
+	doc, err := goquery.NewDocument(url)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	first := doc.Find(".answer").First()
-	if showAll {
-		answer, hasAnswer = getCompleteAnswer(first)
-	} else {
-		answer, hasAnswer = getCodeFromAnswer(first)
+	if first.Length() == 0 {
+		return nil, errors.New("No answer found")
 	}
 
-	answer = strings.TrimSpace(answer)
+	aw := &answer{}
+	aw.url = url
+	aw.html = first
 
-	votes, err = strconv.Atoi(first.Find(".vote-count-post").First().Text())
+	return aw, nil
+}
+
+// parseForCode parses the html and tries to find a code or a pre element. Just the first one
+func(a *answer) parseForCode() {
+	if pre := a.html.Find("pre").First(); pre.Length() > 0 {
+		a.shortText = strings.TrimSpace(pre.Text())
+	} else if code := a.html.Find("code").First(); code.Length() > 0 {
+		a.shortText = strings.TrimSpace(code.Text())
+	}
+}
+
+// parseForText parses the answer html for the complete text from .post-text
+func (a *answer) parseForText() {
+	if text := a.html.Find(".post-text").First(); text.Length() > 0 {
+		a.longText = strings.TrimSpace(text.Text())
+	}
+}
+
+// parseForVotes parses the answer html for the votes (up/down votes)
+func (a *answer) parseForVotes() {
+	votes, _ := strconv.Atoi(a.html.Find(".vote-count-post").First().Text())
+	a.votes = votes
+}
+
+// createGoogleSearchUrl is used to create the google search URL.
+// Example: `https://www.google.com/search?q=site:stackoverflow.com+windows+get+date+command+line`
+func createGoogleSearchURL(query, site string) string {
+	uri := fmt.Sprintf(googleUri, site, url.QueryEscape(query))
+	return googleHost + uri
+}
+
+// getLinks for a `query` and `site`.
+// `site`: What site you want to get links for
+// `query`: Search query you want to search on `site` for.
+func getLinks(query, site string) (links []string, err error) {
+	doc, err := goquery.NewDocument(createGoogleSearchURL(query, site))
+	if err != nil {
+		return
+	}
+
+	filterLink := func(i int, s *goquery.Selection) {
+		href, exists := s.Attr("href")
+		if exists {
+			links = append(links, googleHost+href)
+		}
+	}
+
+	doc.Find("a.l").Each(filterLink)
+	if len(links) == 0 {
+		doc.Find(".r a").Each(filterLink)
+	}
 
 	return
 }
 
-// Start the howto query search
-func howto(query string, engine engines.SearchEngine, showAll bool) (votes int, answer string, err error) {
+// search with specific query and return error or answer
+func search(query string) (*answer, error) {
 	// Get links from search engine
-	links, err := engine.GetLinks(query, site)
+	links, err := getLinks(query, site)
 	if err != nil {
-		return
+		return nil, err
 	} else if len(links) == 0 {
-		err = errors.New("No links found")
-		return
+		return nil, errors.New("No links found")
 	}
 
 	// Crawl links until first answer
 	for _, link := range links {
-		vts, answ, hasAnswer := getAnswer(link, showAll)
-		if hasAnswer {
-			answer = answ
-			votes = vts
-			break
+		aw, err := newAnswer(link)
+		if err == nil {
+			aw.parseForCode()
+			go aw.parseForText()
+			go aw.parseForVotes()
+
+			return aw, nil
 		}
 	}
 
-	return
+	return nil, errors.New("No answer found")
 }
 
-var (
-	question   = kingpin.Arg("question", "The question you ask").Required().String()
-	printAll   = kingpin.Flag("all", "Display the hole answer").Short('a').Bool()
-	printVotes = kingpin.Flag("votes", "Print answer's votes").Short('v').Bool()
-)
-
 func main() {
-	kingpin.Version(wieVersion)
-	kingpin.Parse()
+	query := strings.Join(os.Args[1:], " ")
 
-	votes, answer, err := howto(*question, engines.CreateGoogle(false), *printAll)
+	if query == "" {
+		fmt.Println("Missing query")
+		os.Exit(1)
+		return
+	}
+
+	fmt.Println("Running")
+	aw, err := search(query)
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
+		return
 	}
 
-	if *printVotes {
-		color.Cyan(fmt.Sprintf("Votes: %d", votes))
-	}
+	fmt.Println(aw.shortText)
+	fmt.Println("Legend: [a] Show all, [Enter|q] Quit")
+	fmt.Print("Enter text: ")
 
-	fmt.Println(answer)
+	reader := bufio.NewReader(os.Stdin)
+	text, _ := reader.ReadString('\n')
+	text = strings.TrimSpace(strings.ToLower(text))
+
+	switch text {
+	case "":
+	case "q":
+		return
+	case "a":
+		fmt.Println(aw.longText)
+	}
 }

@@ -6,68 +6,118 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"strings"
+	"net/url"
 )
 
-func TestGetCodeFromAnswer(t *testing.T) {
+func TestParseForCode(t *testing.T) {
 	var tests = []struct {
-		Answer    string
-		HasAnswer bool
+		Answer string
 		InputHTML string
 	}{
 		{
 			"Happy Code",
-			true,
-			"<div>Foo Bar <b>foobar</b> abc <code>Happy Code</code></div>",
+			"<body><div>Foo Bar <b>foobar</b> abc <code>Happy Code</code></div></body>",
 		},
 		{
 			"Happy Pre",
-			true,
-			"<div>Foo Bar <b>foobar</b> abc <pre>Happy Pre</pre></div>",
+			"<body><div>Foo Bar <b>foobar</b> abc <pre>Happy Pre</pre></div>",
 		},
 		{
 			"Happy Code",
-			true,
-			"<div>Foo Bar <b>foobar</b> abc <pre><code>Happy Code</code></pre></div>",
+			"<body><div>Foo Bar <b>foobar</b> abc <pre><code>Happy Code</code></pre></div></body>",
 		},
 		{
 			"",
-			false,
-			"<div>Foo Bar <b>foobar</b></div>",
+			"<body><div>Foo Bar <b>foobar</b></div></body>",
 		},
 	}
 
 	for _, s := range tests {
+		aw := &answer{}
 		doc, _ := goquery.NewDocumentFromReader(strings.NewReader(s.InputHTML))
-		result, found := getCodeFromAnswer(doc.Find("div").First())
+		aw.html = doc.Find("body").First()
 
-		assert.Equal(t, s.HasAnswer, found)
-		assert.Equal(t, s.Answer, result)
+		aw.parseForCode()
+
+		assert.Equal(t, s.Answer, aw.shortText)
 	}
 }
 
-func TestGetCompleteAnswer(t *testing.T) {
+func TestParseForText(t *testing.T) {
 	var tests = []struct {
 		Answer    string
-		HasAnswer bool
 		InputHTML string
 	}{
 		{
 			"Foo Bar foobar abc Happy Code",
-			true,
 			"<body><div class=\"post-text\">Foo Bar <b>foobar</b> abc <code>Happy Code</code></div></body>",
 		},
 		{
 			"",
-			false,
 			"<body><div>Foo Bar <b>foobar</b> abc <code>Happy Code</code></div></body>",
 		},
 	}
 
 	for _, s := range tests {
+		aw := &answer{}
 		doc, _ := goquery.NewDocumentFromReader(strings.NewReader(s.InputHTML))
-		result, found := getCompleteAnswer(doc.Find("body").First())
+		aw.html = doc.Find("body").First()
+		
+		aw.parseForText()
 
-		assert.Equal(t, s.HasAnswer, found)
-		assert.Equal(t, s.Answer, result)
+		assert.Equal(t, s.Answer, aw.longText)
+	}
+}
+
+func TestParseForVotes(t *testing.T) {
+	var tests = []struct {
+		Votes    int
+		InputHTML string
+	}{
+		{
+			-300,
+			"<body><div class=\"vote-count-post\">-300</div></body>",
+		},
+		{
+			211,
+			"<body><div class=\"vote-count-post\">211</div></body>",
+		},
+		{
+			0,
+			"<body><div>Foo Bar <b>foobar</b> abc <code>Happy Code</code></div></body>",
+		},
+	}
+
+	for _, s := range tests {
+		aw := &answer{}
+		doc, _ := goquery.NewDocumentFromReader(strings.NewReader(s.InputHTML))
+		aw.html = doc.Find("body").First()
+		
+		aw.parseForVotes()
+
+		assert.Equal(t, s.Votes, aw.votes)
+	}
+}
+
+func TestCreateGoogleSearchURL(t *testing.T) {
+	var tests = []struct {
+		Expected string
+		Query    string
+		Site     string
+	}{
+		{
+			"https://www.google.com/search?q=site:stackoverflow.com+windows+get+date+command+line",
+			"windows get date command line",
+			"stackoverflow.com",
+		},
+		{
+			"https://www.google.com/search?q=site:stackoverflow.com+" + url.QueryEscape("\"foobar\" for $$%%"),
+			"\"foobar\" for $$%%",
+			"stackoverflow.com",
+		},
+	}
+
+	for _, s := range tests {
+		assert.Equal(t, s.Expected, createGoogleSearchURL(s.Query, s.Site))
 	}
 }
