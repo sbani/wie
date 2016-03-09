@@ -3,9 +3,38 @@
 `wie` means "how" in german and helps you to answer your programmer questions in the command line.
 
 ## Usage
+### Simple, fast and short version (with code only)
 ```bash
-wie golang set $GOPATH # export GOPATH=$HOME/go
-wie docker link container # --link
+# Get results for query: --link
+$ wie docker link container
+Running...
+--link
+Legend: [a] Show all, [Enter|q] Quit
+Enter text: q # or simply hit enter again
+```
+### Show complete answer
+```bash
+# Get results for query: golang set $GOPATH
+$ wie golang set $GOPATH
+Running...
+GOPATH
+Legend: [a] Show all, [Enter|q] Quit
+Enter text: a
+Check your GOPATH variable. Make sure your sources are under GOPATH/src
+
+For instance, this thread illustrates what happen in the case where a go build is done outside of GOPATH/src:
+
+
+  Looks like your GOPATH is set to ~/go but you ran the go install command on ~/dev/go
+
+
+See Go Build
+
+
+  The Go path is a list of directory trees containing Go source code. It is consulted to resolve imports that cannot be found in the standard Go tree.
+
+
+If you have done go build, you can also try a go install (no custom.go): you want to install the package, not a single file.
 ```
 
 ## Build

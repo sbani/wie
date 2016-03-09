@@ -12,7 +12,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-const wieVersion = "0.0.2"
 const site = "stackoverflow.com"
 
 const googleHost = "https://www.google.com"
@@ -132,7 +131,7 @@ func main() {
 		return
 	}
 
-	fmt.Println("Running")
+	fmt.Println("Running...")
 	aw, err := search(query)
 	if err != nil {
 		fmt.Println(err)
