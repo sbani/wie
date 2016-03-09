@@ -1,13 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"net/url"
+	"os"
 	"strconv"
 	"strings"
-	"os"
-	"net/url"
-	"bufio"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -15,14 +15,14 @@ import (
 const site = "stackoverflow.com"
 
 const googleHost = "https://www.google.com"
-const googleUri = "/search?q=site:%s+%s"
+const googleURI = "/search?q=site:%s+%s"
 
 // answer holds all information related to an answer
 type answer struct {
-    url string
-    html *goquery.Selection
-    shortText, longText string
-    votes int
+	url                 string
+	html                *goquery.Selection
+	shortText, longText string
+	votes               int
 }
 
 // newAnswer creates a nem answer
@@ -45,7 +45,7 @@ func newAnswer(url string) (*answer, error) {
 }
 
 // parseForCode parses the html and tries to find a code or a pre element. Just the first one
-func(a *answer) parseForCode() {
+func (a *answer) parseForCode() {
 	if pre := a.html.Find("pre").First(); pre.Length() > 0 {
 		a.shortText = strings.TrimSpace(pre.Text())
 	} else if code := a.html.Find("code").First(); code.Length() > 0 {
@@ -69,7 +69,7 @@ func (a *answer) parseForVotes() {
 // createGoogleSearchUrl is used to create the google search URL.
 // Example: `https://www.google.com/search?q=site:stackoverflow.com+windows+get+date+command+line`
 func createGoogleSearchURL(query, site string) string {
-	uri := fmt.Sprintf(googleUri, site, url.QueryEscape(query))
+	uri := fmt.Sprintf(googleURI, site, url.QueryEscape(query))
 	return googleHost + uri
 }
 

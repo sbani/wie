@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
-	"strings"
 	"net/url"
+	"strings"
 )
 
 func TestParseForCode(t *testing.T) {
 	var tests = []struct {
-		Answer string
+		Answer    string
 		InputHTML string
 	}{
 		{
@@ -62,7 +62,7 @@ func TestParseForText(t *testing.T) {
 		aw := &answer{}
 		doc, _ := goquery.NewDocumentFromReader(strings.NewReader(s.InputHTML))
 		aw.html = doc.Find("body").First()
-		
+
 		aw.parseForText()
 
 		assert.Equal(t, s.Answer, aw.longText)
@@ -71,7 +71,7 @@ func TestParseForText(t *testing.T) {
 
 func TestParseForVotes(t *testing.T) {
 	var tests = []struct {
-		Votes    int
+		Votes     int
 		InputHTML string
 	}{
 		{
@@ -92,7 +92,7 @@ func TestParseForVotes(t *testing.T) {
 		aw := &answer{}
 		doc, _ := goquery.NewDocumentFromReader(strings.NewReader(s.InputHTML))
 		aw.html = doc.Find("body").First()
-		
+
 		aw.parseForVotes()
 
 		assert.Equal(t, s.Votes, aw.votes)
